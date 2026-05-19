@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AION Autopilot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p>AION Browser Autopilot</p>
+        <strong id="page-status">Aguardando pagina</strong>
+      </header>
+
+      <label>
+        Objetivo
+        <textarea id="task" rows="4" placeholder="Ex: Pesquisar cursos de IA gratuitos com certificado"></textarea>
+      </label>
+
+      <section class="actions">
+        <button id="authorize">Autorizar nesta pagina</button>
+        <button id="observe" disabled>Observar pagina</button>
+        <button id="run-google" disabled>Pesquisar no Google</button>
+        <button id="highlight" disabled>Destacar acoes</button>
+      </section>
+
+      <section>
+        <p class="section-title">Atividade</p>
+        <ul id="activity"></ul>
+      </section>
+
+      <section>
+        <p class="section-title">Guardrails</p>
+        <ul class="guardrails">
+          <li>Nao digita senha, token ou dado sensivel.</li>
+          <li>Nao resolve captcha.</li>
+          <li>Nao envia formulario, pagamento ou mensagem sem nova permissao.</li>
+          <li>Cadastro e matricula continuam manuais.</li>
+        </ul>
+      </section>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

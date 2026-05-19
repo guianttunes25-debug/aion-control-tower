@@ -98,11 +98,31 @@ Current Control Tower modules:
 - CEO Agent: local executive chat with fast mode, auto mode, and GPT mode through Ollama.
 - Browser Operator SDR: assisted freelance/job search, opportunity analysis, fit scoring, execution plan, and proposal draft.
 - Browser Autopilot: permission-based browser action session, safe action plan, and human authorization gate for page work.
+- AION Browser Autopilot Extension: Chrome/Edge developer extension for authorized page observation, Google search execution, and safe action highlighting.
 - Product & Content Studio: product concept, AI image prompt, marketplace copy, reels script, caption, and publishing checklist.
 - Automation & Learning Center: assisted automatic execution, course/article learning memory, and human-approved local runs.
 - Agent Graph: hierarchy and delegation view using React Flow with live runtime agents.
 - Ops Room: 2D operator floor with visual stations for planner, lead, revenue, recovery, reply, and deploy agents.
 - Approval Console: human-in-the-loop local approval gate for high-score leads and critical actions.
+
+## Browser Autopilot Extension
+
+Install the local Chrome/Edge extension from:
+
+```text
+C:\AI-Company\projects\taskmaster\tools\browser-extension
+```
+
+Open `chrome://extensions` or `edge://extensions`, enable developer mode, click `Load unpacked`, and select that folder.
+
+Use it on `https://www.google.com`:
+
+1. Open the extension popup.
+2. Enter a goal like `Pesquisar cursos de IA gratuitos com certificado`.
+3. Click `Autorizar nesta pagina`.
+4. Click `Observar pagina`, `Pesquisar no Google`, or `Destacar acoes`.
+
+The extension does not type passwords, solve captchas, submit forms, publish, pay, enroll, or send messages without an explicit future approval flow.
 
 Validate the persistence checkpoint:
 
