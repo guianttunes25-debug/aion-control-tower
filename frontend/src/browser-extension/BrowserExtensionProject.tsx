@@ -5,7 +5,7 @@ const extensionPath = 'C:\\AI-Company\\projects\\taskmaster\\tools\\browser-exte
 const capabilities = [
   'Autorizar uma aba por objetivo',
   'Enviar snapshot ao backend local',
-  'Decidir com Safety Policy + qwen2.5-coder:14b',
+  'Decidir com Safety Policy + aion-staff',
   'Destacar botoes, links e campos operaveis',
   'Iniciar pesquisa segura no Google',
 ]
@@ -42,7 +42,7 @@ export function BrowserExtensionProject() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300/80">Projeto de extensão</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">AION Browser Autopilot para Chrome/Edge</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
-            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent, que aplica Safety Policy e usa qwen2.5-coder:14b quando precisa raciocinar sobre a página.
+            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent, que aplica Safety Policy e usa o modelo local aion-staff quando precisa raciocinar sobre a página.
           </p>
         </div>
         <span className="rounded-md border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">
@@ -101,7 +101,7 @@ export function BrowserExtensionProject() {
       <article className="mt-4 rounded-lg border border-slate-800 bg-slate-900/50 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Cérebro central local</p>
         <p className="mt-2 text-sm text-slate-400">
-          O modelo local entra como consultor. Se o Ollama estiver offline ou a ação for sensível, o backend mantém decisão determinística e exige humano.
+          O modelo local aion-staff entra como consultor. Se o Ollama estiver offline ou a ação for sensível, o backend mantém decisão determinística e exige humano.
         </p>
         <div className="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
           {endpoints.map((endpoint) => (

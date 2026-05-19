@@ -136,6 +136,29 @@ POST /browser-autopilot/sessions/{id}/execution-result
 
 The backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, asks `qwen2.5-coder:14b` through Ollama when page reasoning is useful, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
 
+## AION Staff Local Model
+
+The Browser Autopilot uses an Ollama model alias named `aion-staff`, built from `qwen2.5-coder:14b` with a Staff Engineer system prompt and larger context window.
+
+Create or refresh the model:
+
+```powershell
+cd C:\AI-Company\projects\taskmaster
+ollama create aion-staff -f tools\ollama\aion-staff.Modelfile
+```
+
+Backend LLM settings live in `backend/src/main/resources/application.yml`:
+
+```yaml
+aion:
+	browser-autopilot:
+		llm:
+			model: aion-staff
+			num-ctx: 32768
+```
+
+If local latency or memory usage gets too high, reduce `num-ctx` to `8192` or `4096` and restart the backend.
+
 Validate the persistence checkpoint:
 
 ```powershell

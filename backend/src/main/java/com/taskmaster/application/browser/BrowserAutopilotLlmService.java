@@ -22,17 +22,32 @@ public class BrowserAutopilotLlmService {
     private final boolean enabled;
     private final String baseUrl;
     private final String model;
+    private final String keepAlive;
+    private final double temperature;
+    private final int numCtx;
+    private final int numPredict;
+    private final int timeoutSeconds;
 
     public BrowserAutopilotLlmService(
         ObjectMapper objectMapper,
         @Value("${aion.browser-autopilot.llm.enabled:true}") boolean enabled,
         @Value("${aion.browser-autopilot.llm.base-url:http://localhost:11434}") String baseUrl,
-        @Value("${aion.browser-autopilot.llm.model:qwen2.5-coder:14b}") String model
+        @Value("${aion.browser-autopilot.llm.model:aion-staff}") String model,
+        @Value("${aion.browser-autopilot.llm.keep-alive:30s}") String keepAlive,
+        @Value("${aion.browser-autopilot.llm.temperature:0.1}") double temperature,
+        @Value("${aion.browser-autopilot.llm.num-ctx:32768}") int numCtx,
+        @Value("${aion.browser-autopilot.llm.num-predict:320}") int numPredict,
+        @Value("${aion.browser-autopilot.llm.timeout-seconds:20}") int timeoutSeconds
     ) {
         this.objectMapper = objectMapper;
         this.enabled = enabled;
         this.baseUrl = baseUrl;
         this.model = model;
+        this.keepAlive = keepAlive;
+        this.temperature = temperature;
+        this.numCtx = numCtx;
+        this.numPredict = numPredict;
+        this.timeoutSeconds = timeoutSeconds;
         this.httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(2))
             .build();
@@ -47,11 +62,11 @@ public class BrowserAutopilotLlmService {
             String requestBody = objectMapper.writeValueAsString(Map.of(
                 "model", model,
                 "stream", false,
-                "keep_alive", "30s",
+                "keep_alive", keepAlive,
                 "options", Map.of(
-                    "temperature", 0.15,
-                    "num_ctx", 2048,
-                    "num_predict", 220
+                    "temperature", temperature,
+                    "num_ctx", numCtx,
+                    "num_predict", numPredict
                 ),
                 "messages", List.of(
                     Map.of(
@@ -67,7 +82,7 @@ public class BrowserAutopilotLlmService {
 
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/chat"))
-                .timeout(Duration.ofSeconds(12))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
@@ -123,10 +138,11 @@ public class BrowserAutopilotLlmService {
     }
 
     private String systemPrompt() {
-        return "Voce e o BrowserAutopilotAgent do AION. Responda somente JSON valido. "
+        return "Voce e o BrowserAutopilotAgent do AION, operando como Staff Software Engineer local. Responda somente JSON valido. "
             + "Nunca sugira digitar senha, token, captcha, pagamento, publicacao, envio de formulario, cadastro ou matricula. "
             + "Quando encontrar acao sensivel, use actionType REQUEST_HUMAN_APPROVAL, riskLevel HIGH e approvalRequired true. "
             + "Acoes permitidas: OBSERVE_PAGE, RUN_SEARCH, EXTRACT_PUBLIC_CONTENT, HIGHLIGHT_SAFE_ACTIONS, REQUEST_HUMAN_APPROVAL. "
+            + "Antes de decidir, considere seguranca, reversibilidade, observabilidade e manutencao. "
             + "Formato: {\"actionType\":\"...\",\"riskLevel\":\"LOW|MEDIUM|HIGH\",\"approvalRequired\":false,\"nextAction\":\"...\",\"reason\":\"...\"}.";
     }
 

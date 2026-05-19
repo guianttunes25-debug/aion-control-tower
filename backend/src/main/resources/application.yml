@@ -27,4 +27,9 @@ aion:
     llm:
       enabled: true
       base-url: http://localhost:11434
-      model: qwen2.5-coder:14b
+      model: aion-staff
+      keep-alive: 30s
+      temperature: 0.1
+      num-ctx: 32768
+      num-predict: 320
+      timeout-seconds: 20
