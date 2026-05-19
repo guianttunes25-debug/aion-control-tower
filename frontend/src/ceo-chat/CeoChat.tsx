@@ -22,6 +22,9 @@ const storageKey = 'aion-ceo-chat-history'
 const modeStorageKey = 'aion-ceo-chat-mode'
 const quickPrompts = [
   'CEO, o que está sendo feito agora?',
+  'CEO, analise o mercado em geral',
+  'Como pesquisar sites automaticamente?',
+  'Atuar em uma página com autorização',
   'Procurar trabalhos no 99Freelas',
   'Criar produto com estampa e reels',
   'Executar tarefa automática assistida',
@@ -109,6 +112,18 @@ function formatCurrentWork(telemetry: TelemetrySnapshot) {
   ].join(' ')
 }
 
+function formatMarketOverview() {
+  return [
+    'Falando do mercado em geral: eu separaria a análise em três frentes.',
+    '',
+    '1. Demanda local: negócios pequenos ainda precisam de atendimento rápido, agenda organizada, WhatsApp comercial, presença no Google e conteúdo simples nas redes.',
+    '2. Oferta vendável agora: automação de atendimento, landing page, CRM leve, chatbot, dashboard e melhoria de processo comercial têm mais chance de virar primeiro pagamento.',
+    '3. Estratégia prática: escolher um nicho por vez, abordar 10 a 20 leads reais, registrar objeções, ajustar a oferta e repetir até aparecer sinal de compra.',
+    '',
+    'Minha recomendação: não tentar vender "IA genérica". Vender resultado específico, por exemplo: mais respostas no WhatsApp, menos lead perdido, proposta mais rápida ou agenda comercial organizada.',
+  ].join('\n')
+}
+
 function formatFreelanceSearch() {
   return [
     'Ativei o plano de prospecção assistida: use o painel Browser Operator SDR logo abaixo desta conversa.',
@@ -142,6 +157,54 @@ function formatAutomationCenter() {
   ].join('\n')
 }
 
+function formatAutonomousResearch() {
+  return [
+    'Consigo ajudar com pesquisa automática assistida e agora existe o Browser Autopilot no painel para criar uma sessão de atuação por página com autorização.',
+    '',
+    'Fluxo atual:',
+    '1. Você informa a URL e o que quer que eu faça.',
+    '2. Eu abro a página e crio uma sessão de autorização.',
+    '3. Você autoriza o escopo permitido.',
+    '4. Eu gero o plano seguro de ação e bloqueio login, senha, captcha, pagamento, publicação e envio externo sem nova aprovação.',
+    '',
+    'Diferença importante: a tela web já cria o gate estilo Claude. Para eu clicar, ler DOM, rolar, preencher campos e estudar páginas sozinho de verdade, precisamos conectar um worker local com Playwright ou uma extensão, porque o navegador bloqueia uma página comum de controlar outras abas por segurança.',
+    '',
+    'Próximo passo técnico: Browser Research Agent com Playwright local, permissões por sessão, captura de conteúdo permitido e memória persistente no backend.',
+  ].join('\n')
+}
+
+function asksAboutGeneralMarket(normalizedPrompt: string) {
+  return (
+    normalizedPrompt.includes('mercado em geral')
+    || normalizedPrompt.includes('mercado geral')
+    || normalizedPrompt.includes('no mercado em geral')
+    || normalizedPrompt.includes('mercado como um todo')
+    || normalizedPrompt.includes('tendencia')
+    || normalizedPrompt.includes('tendência')
+  )
+}
+
+function asksAboutAutonomousResearch(normalizedPrompt: string) {
+  return (
+    normalizedPrompt.includes('qualquer site')
+    || normalizedPrompt.includes('pesquisa automática')
+    || normalizedPrompt.includes('pesquisar automaticamente')
+    || normalizedPrompt.includes('modo automático')
+    || normalizedPrompt.includes('estilo claude')
+    || normalizedPrompt.includes('claude')
+    || normalizedPrompt.includes('atuar na pagina')
+    || normalizedPrompt.includes('atuar na página')
+    || normalizedPrompt.includes('autorização para atuar')
+    || normalizedPrompt.includes('autorizacao para atuar')
+    || normalizedPrompt.includes('navegar sozinho')
+    || normalizedPrompt.includes('estudar automático')
+    || normalizedPrompt.includes('estudar automaticamente')
+    || normalizedPrompt.includes('aprender automaticamente')
+    || normalizedPrompt.includes('entrar em site')
+    || normalizedPrompt.includes('entrar em qualquer site')
+  )
+}
+
 function isLocalCommand(prompt: string) {
   const normalizedPrompt = prompt.toLowerCase()
   return Boolean(
@@ -149,6 +212,8 @@ function isLocalCommand(prompt: string) {
     || normalizedPrompt.includes('lead')
     || normalizedPrompt.includes('cliente')
     || normalizedPrompt.includes('mercado')
+    || normalizedPrompt.includes('tendência')
+    || normalizedPrompt.includes('tendencia')
     || normalizedPrompt.includes('agente')
     || normalizedPrompt.includes('runtime')
     || normalizedPrompt.includes('worker')
@@ -198,6 +263,14 @@ function buildCeoReply(prompt: string, telemetry: TelemetrySnapshot, openedUrlRe
     return urlRequest.opened
       ? `Abri ${urlRequest.url} em uma nova aba. Vou tratar isso como pesquisa operacional; quando você voltar com o contexto, eu conecto com leads, oferta ou execução.`
       : `Tentei abrir ${urlRequest.url}, mas o navegador bloqueou a nova aba. O link está registrado aqui para você abrir manualmente.`
+  }
+
+  if (asksAboutAutonomousResearch(normalizedPrompt)) {
+    return formatAutonomousResearch()
+  }
+
+  if (asksAboutGeneralMarket(normalizedPrompt)) {
+    return formatMarketOverview()
   }
 
   if (normalizedPrompt.includes('lead') || normalizedPrompt.includes('cliente') || normalizedPrompt.includes('mercado')) {

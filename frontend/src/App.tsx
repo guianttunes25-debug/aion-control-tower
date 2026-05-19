@@ -6,6 +6,7 @@ import { TopLeads } from './components/TopLeads'
 import { AgentGraph } from './agent-graph/AgentGraph'
 import { ApprovalConsole } from './approval-console/ApprovalConsole'
 import { AutomationCenter } from './automation-center/AutomationCenter'
+import { BrowserAutopilot } from './browser-autopilot/BrowserAutopilot'
 import { BrowserOperator } from './browser-operator/BrowserOperator'
 import { CeoChat } from './ceo-chat/CeoChat'
 import { useAionTelemetry } from './hooks/useAionTelemetry'
@@ -50,6 +51,8 @@ function App() {
         <CeoChat telemetry={telemetry} />
 
         <BrowserOperator />
+
+        <BrowserAutopilot />
 
         <ProductStudio />
 

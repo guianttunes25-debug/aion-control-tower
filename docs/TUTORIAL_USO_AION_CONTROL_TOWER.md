@@ -8,6 +8,7 @@ O projeto agora tem estes módulos principais:
 
 - **CEO Agent**: conversa com você, responde status, consulta telemetria e pode usar GPT local quando você ativar.
 - **Browser Operator SDR**: ajuda a procurar trabalhos em 99Freelas, Workana e Google, registrar oportunidades e gerar propostas.
+- **Browser Autopilot**: cria uma sessão de atuação em página com autorização humana, escopo permitido, bloqueios e plano seguro.
 - **Product & Content Studio**: cria pacotes de produto, prompts de estampa, anúncios, roteiros de reels e legendas.
 - **Approval Console**: permite aprovar, rejeitar ou pedir modificação em decisões comerciais críticas.
 - **Control Tower**: mostra saúde do sistema, agentes, leads, runtime e eventos.
@@ -156,7 +157,32 @@ Revise com cuidado antes de aceitar trabalhos de:
 - tarefas que exigem senha, captcha ou dados sensíveis;
 - qualquer envio externo em seu nome.
 
-## 5. Como Criar Produtos, Estampas e Reels
+## 5. Como Usar o Browser Autopilot
+
+Use o **Browser Autopilot** quando quiser um fluxo parecido com: abrir uma página, pedir autorização e preparar atuação na página.
+
+### Passo a Passo
+
+1. Cole a URL da página.
+2. Descreva o que a IA deve fazer nessa página.
+3. Clique em **Abrir página e pedir autorização**.
+4. Revise o escopo permitido e o que está bloqueado.
+5. Clique em **Autorizar atuação**.
+6. Clique em **Executar plano seguro**.
+
+Hoje esta tela cria o gate de permissão e o plano seguro. Para a IA clicar, ler DOM, rolar e preencher campos em sites externos de verdade, o próximo passo técnico é conectar um worker local com Playwright ou uma extensão do navegador.
+
+Nunca autorize automaticamente:
+
+- login;
+- senha;
+- captcha;
+- pagamento;
+- publicação;
+- envio de proposta/mensagem;
+- alteração externa sensível.
+
+## 6. Como Criar Produtos, Estampas e Reels
 
 Use o módulo **Product & Content Studio**.
 
@@ -189,7 +215,7 @@ O sistema gera:
 
 O sistema prepara os ativos, mas não publica nem vende sozinho.
 
-## 6. Como Usar o Approval Console
+## 7. Como Usar o Approval Console
 
 O **Approval Console** serve para decisões humanas.
 
@@ -201,7 +227,7 @@ Você pode clicar:
 
 Hoje essa decisão fica salva localmente no navegador. Backend real de aprovação pode ser criado depois.
 
-## 7. Como Interpretar a Latência
+## 8. Como Interpretar a Latência
 
 No painel, a latência mistura várias chamadas da UI.
 
@@ -213,7 +239,7 @@ Referência prática:
 
 O backend isolado costuma responder rápido. O CEO em modo GPT é mais lento porque chama o modelo local e pode usar GPU.
 
-## 8. O Que Não Fazer Ainda
+## 9. O Que Não Fazer Ainda
 
 Não deixe o sistema fazer sozinho:
 
@@ -229,7 +255,7 @@ Não deixe o sistema fazer sozinho:
 
 Quando aparecer senha, token, API key ou dado sensível, digite diretamente no site ou terminal. Não cole no chat.
 
-## 9. Rotina Recomendada Diária
+## 10. Rotina Recomendada Diária
 
 1. Abra o AION pelo `.exe`.
 2. Pergunte ao CEO: `o que está sendo feito agora?`.
@@ -241,7 +267,7 @@ Quando aparecer senha, token, API key ou dado sensível, digite diretamente no s
 8. Publique ou envie somente depois de revisar manualmente.
 9. Registre retorno real: objeção, interesse, reunião, orçamento e follow-up.
 
-## 10. Quando Usar Cada Modo
+## 11. Quando Usar Cada Modo
 
 Use **CEO Rápido** para:
 

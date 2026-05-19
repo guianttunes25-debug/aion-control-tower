@@ -97,6 +97,7 @@ Current Control Tower modules:
 - Control Tower: system status, heartbeat, runtime metrics, PMF metrics, top leads, and live feed.
 - CEO Agent: local executive chat with fast mode, auto mode, and GPT mode through Ollama.
 - Browser Operator SDR: assisted freelance/job search, opportunity analysis, fit scoring, execution plan, and proposal draft.
+- Browser Autopilot: permission-based browser action session, safe action plan, and human authorization gate for page work.
 - Product & Content Studio: product concept, AI image prompt, marketplace copy, reels script, caption, and publishing checklist.
 - Automation & Learning Center: assisted automatic execution, course/article learning memory, and human-approved local runs.
 - Agent Graph: hierarchy and delegation view using React Flow with live runtime agents.

@@ -25,6 +25,7 @@ O sistema combina:
 - **Frontend React** com painel operacional em tempo real;
 - **CEO Agent** para conversa executiva local;
 - **Browser Operator SDR** para busca assistida de oportunidades;
+- **Browser Autopilot** para sessao de atuacao em pagina com autorizacao humana;
 - **Product & Content Studio** para produtos, estampas, anuncios e reels;
 - **Automation & Learning Center** para execucao automatica assistida e memoria de aprendizado;
 - **Approval Console** para manter a decisao humana em acoes criticas;
@@ -74,7 +75,23 @@ Permite:
 
 O sistema nao faz login, nao passa captcha e nao envia proposta sem revisao humana.
 
-### 4. Product & Content Studio
+### 4. Browser Autopilot
+
+Modulo inspirado no fluxo de autorizacao de agentes que atuam em paginas.
+
+Permite:
+
+- informar URL e objetivo;
+- abrir pagina em nova aba;
+- criar sessao de permissao;
+- listar acoes permitidas e bloqueadas;
+- autorizar atuacao por tarefa;
+- gerar plano seguro antes de agir;
+- bloquear login, senha, captcha, pagamento, publicacao e envio externo sem aprovacao.
+
+O controle completo de DOM, cliques, rolagem e preenchimento em sites externos exige o proximo passo tecnico: Browser Research Agent com Playwright local ou extensao de navegador.
+
+### 5. Product & Content Studio
 
 Modulo para criacao assistida de produtos digitais/comerciais.
 
@@ -89,7 +106,7 @@ Gera:
 
 A publicacao continua manual ou dependente de aprovacao humana.
 
-### 5. Automation & Learning Center
+### 6. Automation & Learning Center
 
 Modulo para execucao automatica assistida e aprendizado por curso.
 
@@ -103,7 +120,7 @@ Permite:
 
 As automacoes sao deliberadamente seguras: login, senha, captcha, publicacao, envio, pagamento e alteracoes externas continuam bloqueados ate aprovacao humana.
 
-### 6. Agent Graph
+### 7. Agent Graph
 
 Visualizacao da hierarquia de agentes usando React Flow.
 
@@ -115,11 +132,11 @@ Mostra:
 - Dispatcher;
 - agentes especialistas e workers.
 
-### 7. Ops Room
+### 8. Ops Room
 
 Sala operacional 2D dos agentes, com estacoes visuais para planejamento, pesquisa, receita, recuperacao, resposta e deploy.
 
-### 8. Approval Console
+### 9. Approval Console
 
 Console de decisao humana para registrar:
 
@@ -201,6 +218,7 @@ O projeto ja possui:
 - painel de controle;
 - CEO Chat;
 - Browser Operator SDR;
+- Browser Autopilot;
 - Product & Content Studio;
 - Automation & Learning Center;
 - Approval Console;
@@ -233,9 +251,10 @@ Validacoes recentes:
 5. Abrir o Browser Operator SDR e simular analise de uma oportunidade.
 6. Mostrar geracao de proposta assistida.
 7. Abrir Product & Content Studio e gerar pacote de produto.
-8. Abrir Automation & Learning Center, salvar um aprendizado e criar uma execucao assistida.
-9. Mostrar Approval Console como camada de seguranca.
-10. Fechar explicando a arquitetura local, o runtime de agentes e o foco em receita.
+8. Abrir Browser Autopilot, criar uma sessao, autorizar escopo e mostrar o plano seguro.
+9. Abrir Automation & Learning Center, salvar um aprendizado e criar uma execucao assistida.
+10. Mostrar Approval Console como camada de seguranca.
+11. Fechar explicando a arquitetura local, o runtime de agentes e o foco em receita.
 
 ## Como Explicar em Uma Frase
 
