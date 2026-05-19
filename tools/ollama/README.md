@@ -18,4 +18,4 @@ ollama run aion-staff "Responda em JSON: {\"status\":\"ok\"}"
 
 ## Observação
 
-O `num_ctx 32768` aumenta a janela de contexto, mas também aumenta uso de memória e latência. Se a máquina ficar pesada, reduza `aion.browser-autopilot.llm.num-ctx` em `backend/src/main/resources/application.yml` para `8192` ou `4096`.
+O `num_ctx 32768` aumenta a janela de contexto, mas também aumenta uso de memória e latência. O primeiro uso pode levar mais tempo enquanto o Ollama carrega o modelo. Se a máquina ficar pesada, reduza `aion.browser-autopilot.llm.num-ctx` em `backend/src/main/resources/application.yml` para `8192` ou `4096`.

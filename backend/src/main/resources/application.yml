@@ -32,4 +32,4 @@ aion:
       temperature: 0.1
       num-ctx: 32768
       num-predict: 320
-      timeout-seconds: 20
+      timeout-seconds: 45
