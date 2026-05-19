@@ -7,6 +7,7 @@ const capabilities = [
   'Enviar snapshot ao backend local',
   'Decidir com Safety Policy + aion-staff',
   'Executar ferramenta segura sugerida',
+  'Rodar auto loop com limite de 3 passos',
   'Destacar botoes, links e campos operaveis',
   'Extrair conteudo publico da pagina',
   'Iniciar pesquisa segura no Google',
@@ -52,7 +53,7 @@ export function BrowserExtensionProject() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300/80">Projeto de extensão</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">AION Browser Autopilot para Chrome/Edge</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
-            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent, que aplica Safety Policy, usa o modelo local aion-staff e escolhe ferramentas seguras para observar, pesquisar, extrair ou destacar a página.
+            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent, que aplica Safety Policy, usa o modelo local aion-staff, escolhe ferramentas seguras e pode executar um auto loop curto até encontrar risco ou precisar de humano.
           </p>
         </div>
         <span className="rounded-md border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">
@@ -112,6 +113,9 @@ export function BrowserExtensionProject() {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Cérebro central local</p>
         <p className="mt-2 text-sm text-slate-400">
           O modelo local aion-staff entra como consultor. Se o Ollama estiver offline ou a ação for sensível, o backend mantém decisão determinística e exige humano.
+        </p>
+        <p className="mt-2 text-sm text-slate-400">
+          O Auto Loop roda no máximo 3 passos seguros, para em ações repetidas, pausa após navegação/pesquisa e nunca executa ferramentas que exijam aprovação humana.
         </p>
         <div className="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
           {endpoints.map((endpoint) => (

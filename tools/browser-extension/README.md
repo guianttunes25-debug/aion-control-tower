@@ -19,8 +19,9 @@ Extensao local para transformar uma aba aberta do Chrome/Edge em uma superficie 
 5. Clique em `Observar pagina` para capturar titulo, URL e acoes visiveis.
 6. Clique em `Decidir proximo passo` para enviar o snapshot ao `BrowserAutopilotAgent` local.
 7. Quando a decisao sugerir uma ferramenta segura, a extensao executa automaticamente e tambem libera `Executar ferramenta segura` para repetir a acao.
-8. Clique em `Pesquisar no Google` para iniciar a busca manualmente quando quiser.
-9. Em paginas de curso, use `Destacar acoes` para visualizar links, botoes e campos que o AION poderia operar com autorizacao futura.
+8. Use `Auto loop seguro` para rodar ate 3 ciclos observar-decidir-executar.
+9. Clique em `Pesquisar no Google` para iniciar a busca manualmente quando quiser.
+10. Em paginas de curso, use `Destacar acoes` para visualizar links, botoes e campos que o AION poderia operar com autorizacao futura.
 
 ## O que ela faz
 
@@ -31,6 +32,8 @@ Extensao local para transformar uma aba aberta do Chrome/Edge em uma superficie 
 - Cai para regras deterministicas se o Ollama estiver offline ou demorar.
 - Recebe `toolName`, `toolInput` e `autoExecutable` do backend.
 - Executa ferramentas seguras como `observe_page`, `highlight_safe_actions`, `run_google_search` e `extract_public_content`.
+- Roda Auto Loop seguro com limite de 3 passos.
+- Para o Auto Loop quando encontra risco alto, exige humano, repete a mesma acao ou inicia navegacao/pesquisa.
 - Destaca botoes, links e campos de formulario.
 - Executa uma pesquisa segura no Google quando autorizado.
 - Abre Google em nova aba quando a aba atual nao e Google.

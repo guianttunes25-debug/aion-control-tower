@@ -3,6 +3,8 @@ const authorizeButton = document.querySelector('#authorize')
 const observeButton = document.querySelector('#observe')
 const decideButton = document.querySelector('#decide')
 const executeToolButton = document.querySelector('#execute-tool')
+const autoLoopButton = document.querySelector('#auto-loop')
+const stopLoopButton = document.querySelector('#stop-loop')
 const runGoogleButton = document.querySelector('#run-google')
 const highlightButton = document.querySelector('#highlight')
 const activityList = document.querySelector('#activity')
@@ -11,6 +13,7 @@ const pageStatus = document.querySelector('#page-status')
 const backendBaseUrl = 'http://localhost:8080/browser-autopilot/sessions'
 const defaultTask = 'Pesquisar cursos de IA gratuitos com certificado e parar antes de cadastro ou login'
 let lastDecision = null
+let autoLoopRunning = false
 
 function addActivity(text) {
   const item = document.createElement('li')
@@ -22,9 +25,16 @@ function setAuthorized(enabled) {
   observeButton.disabled = !enabled
   decideButton.disabled = !enabled
   executeToolButton.disabled = !enabled || !lastDecision?.autoExecutable
+  autoLoopButton.disabled = !enabled || autoLoopRunning
+  stopLoopButton.disabled = !autoLoopRunning
   runGoogleButton.disabled = !enabled
   highlightButton.disabled = !enabled
-  pageStatus.textContent = enabled ? 'Autorizado' : 'Aguardando autorizacao'
+  pageStatus.textContent = autoLoopRunning ? 'Auto loop ativo' : enabled ? 'Autorizado' : 'Aguardando autorizacao'
+}
+
+function setLoopRunning(enabled) {
+  autoLoopRunning = enabled
+  setAuthorized(true)
 }
 
 async function postJson(url, body) {
@@ -163,6 +173,28 @@ async function executeDecisionTool(decision, task) {
   return null
 }
 
+async function decideNextStep(tab, task) {
+  const snapshot = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
+  const decision = await withFreshSession(tab, task, async (sessionId) => {
+    await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
+    return postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
+  })
+
+  lastDecision = decision
+  executeToolButton.disabled = !decision.autoExecutable
+  addActivity(`Decisao: ${decision.actionType} / risco ${decision.riskLevel}. ${decision.nextAction}`)
+  if (decision.toolName) {
+    addActivity(`Ferramenta sugerida: ${decision.toolName}${decision.autoExecutable ? ' (auto segura)' : ' (manual)'}`)
+  }
+  if (decision.reason) {
+    addActivity(`Motivo: ${decision.reason}`)
+  }
+  if (decision.approvalRequired) {
+    addActivity('Aprovacao humana obrigatoria antes de executar esta acao.')
+  }
+  return decision
+}
+
 async function executeLastDecision() {
   const tab = await getActiveTab()
   const task = taskInput.value.trim() || defaultTask
@@ -174,6 +206,69 @@ async function executeLastDecision() {
   const execution = await executeDecisionTool(lastDecision, task)
   if (execution) {
     await withFreshSession(tab, task, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/execution-result`, { result: execution.message }))
+  }
+}
+
+async function runAutoLoop() {
+  if (autoLoopRunning) {
+    return
+  }
+
+  setLoopRunning(true)
+  addActivity('Auto loop iniciado: limite de 3 passos seguros.')
+
+  const task = taskInput.value.trim() || defaultTask
+  const seenActions = new Set()
+  const maxSteps = 3
+
+  try {
+    for (let step = 1; step <= maxSteps; step += 1) {
+      if (!autoLoopRunning) {
+        addActivity('Auto loop interrompido pelo humano.')
+        return
+      }
+
+      const tab = await getActiveTab()
+      const decision = await decideNextStep(tab, task)
+      const signature = `${decision.actionType}:${decision.toolName}:${decision.toolInput || ''}`
+
+      if (decision.approvalRequired || decision.riskLevel === 'HIGH') {
+        addActivity('Auto loop pausado: decisao exige aprovacao humana.')
+        return
+      }
+
+      if (!decision.autoExecutable) {
+        addActivity('Auto loop pausado: proxima ferramenta nao e autoexecutavel.')
+        return
+      }
+
+      if (seenActions.has(signature)) {
+        addActivity('Auto loop pausado: a mesma acao foi sugerida novamente.')
+        return
+      }
+      seenActions.add(signature)
+
+      const execution = await executeDecisionTool(decision, task)
+      if (!execution) {
+        addActivity('Auto loop pausado: ferramenta nao retornou resultado executavel.')
+        return
+      }
+
+      await withFreshSession(tab, task, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/execution-result`, {
+        result: `auto loop passo ${step}: ${execution.message}`,
+      }))
+
+      if (decision.toolName === 'run_google_search') {
+        addActivity('Auto loop pausado: pesquisa/navegacao iniciada. Reobserve a pagina depois de carregar.')
+        return
+      }
+    }
+
+    addActivity(`Auto loop concluiu ${maxSteps} passos seguros.`)
+  } catch (error) {
+    addActivity(`Auto loop falhou: ${error.message}`)
+  } finally {
+    setLoopRunning(false)
   }
 }
 
@@ -207,28 +302,23 @@ decideButton.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab()
     const task = taskInput.value.trim() || defaultTask
-    const snapshot = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
-    const decision = await withFreshSession(tab, task, async (sessionId) => {
-      await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
-      return postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
-    })
-    lastDecision = decision
-    executeToolButton.disabled = !decision.autoExecutable
-    addActivity(`Decisao: ${decision.actionType} / risco ${decision.riskLevel}. ${decision.nextAction}`)
-    if (decision.toolName) {
-      addActivity(`Ferramenta sugerida: ${decision.toolName}${decision.autoExecutable ? ' (auto segura)' : ' (manual)'}`)
-    }
-    if (decision.reason) {
-      addActivity(`Motivo: ${decision.reason}`)
-    }
-    if (decision.approvalRequired) {
-      addActivity('Aprovacao humana obrigatoria antes de executar esta acao.')
-    } else if (decision.autoExecutable) {
+    const decision = await decideNextStep(tab, task)
+    if (!decision.approvalRequired && decision.autoExecutable) {
       await executeLastDecision()
     }
   } catch (error) {
     addActivity(`Falha ao decidir: ${error.message}`)
   }
+})
+
+autoLoopButton.addEventListener('click', async () => {
+  await runAutoLoop()
+})
+
+stopLoopButton.addEventListener('click', () => {
+  autoLoopRunning = false
+  addActivity('Pedido de parada recebido.')
+  setAuthorized(true)
 })
 
 executeToolButton.addEventListener('click', async () => {

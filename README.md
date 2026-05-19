@@ -148,6 +148,8 @@ request_human_approval
 
 The backend returns `toolName`, `toolInput`, and `autoExecutable` in each decision. The extension may execute only safe auto tools. Sensitive actions still require human approval and are not auto-executed.
 
+The extension also includes a safe Auto Loop mode. It runs at most three observe-decide-execute cycles, stops on high risk, stops when approval is required, stops on repeated actions, and pauses after navigation/search so the human can reobserve the newly loaded page.
+
 ## AION Staff Local Model
 
 The Browser Autopilot uses an Ollama model alias named `aion-staff`, built from `qwen2.5-coder:14b` with a Staff Engineer system prompt and larger context window.
