@@ -84,12 +84,39 @@ async function getActiveTab() {
   return tab
 }
 
+function canInjectContentScript(tab) {
+  return Boolean(tab?.id && tab.url && /^https?:\/\//.test(tab.url))
+}
+
+function isMissingContentScriptError(error) {
+  return error?.message?.includes('Receiving end does not exist') || error?.message?.includes('Could not establish connection')
+}
+
+async function ensureContentScript(tab) {
+  if (!canInjectContentScript(tab)) {
+    throw new Error('Esta pagina nao permite automacao pela extensao. Abra uma pagina http/https comum.')
+  }
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ['content.js'],
+  })
+}
+
 async function sendToActiveTab(message) {
   const tab = await getActiveTab()
   if (!tab?.id) {
     throw new Error('Nenhuma aba ativa encontrada')
   }
-  return chrome.tabs.sendMessage(tab.id, message)
+  try {
+    return await chrome.tabs.sendMessage(tab.id, message)
+  } catch (error) {
+    if (!isMissingContentScriptError(error)) {
+      throw error
+    }
+    await ensureContentScript(tab)
+    return chrome.tabs.sendMessage(tab.id, message)
+  }
 }
 
 async function loadState() {

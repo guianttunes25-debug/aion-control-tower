@@ -1,4 +1,7 @@
-const AION_SAFE_ACTION_STYLE_ID = 'aion-autopilot-safe-action-style'
+if (!window.__AION_AUTOPILOT_CONTENT_READY) {
+  window.__AION_AUTOPILOT_CONTENT_READY = true
+
+  const AION_SAFE_ACTION_STYLE_ID = 'aion-autopilot-safe-action-style'
 
 function visibleText(element) {
   return (element.innerText || element.textContent || element.getAttribute('aria-label') || element.getAttribute('title') || '').trim()
@@ -99,26 +102,27 @@ function extractPublicContent() {
   }
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'AION_OBSERVE_PAGE') {
-    sendResponse(observePage())
-    return true
-  }
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'AION_OBSERVE_PAGE') {
+      sendResponse(observePage())
+      return true
+    }
 
-  if (message.type === 'AION_HIGHLIGHT_ACTIONS') {
-    sendResponse({ count: highlightActions() })
-    return true
-  }
+    if (message.type === 'AION_HIGHLIGHT_ACTIONS') {
+      sendResponse({ count: highlightActions() })
+      return true
+    }
 
-  if (message.type === 'AION_RUN_GOOGLE_SEARCH') {
-    sendResponse({ message: runGoogleSearch(message.task || 'cursos de IA') })
-    return true
-  }
+    if (message.type === 'AION_RUN_GOOGLE_SEARCH') {
+      sendResponse({ message: runGoogleSearch(message.task || 'cursos de IA') })
+      return true
+    }
 
-  if (message.type === 'AION_EXTRACT_PUBLIC_CONTENT') {
-    sendResponse(extractPublicContent())
-    return true
-  }
+    if (message.type === 'AION_EXTRACT_PUBLIC_CONTENT') {
+      sendResponse(extractPublicContent())
+      return true
+    }
 
-  return false
-})
+    return false
+  })
+}
