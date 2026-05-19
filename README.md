@@ -124,6 +124,18 @@ Use it on `https://www.google.com`:
 
 The extension does not type passwords, solve captchas, submit forms, publish, pay, enroll, or send messages without an explicit future approval flow.
 
+Browser Autopilot central brain endpoints:
+
+```text
+POST /browser-autopilot/sessions
+GET  /browser-autopilot/sessions
+POST /browser-autopilot/sessions/{id}/observe
+POST /browser-autopilot/sessions/{id}/decide
+POST /browser-autopilot/sessions/{id}/execution-result
+```
+
+The first backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, proposes the next action, and requires human approval for sensitive actions. The LLM layer can be attached after this contract is stable.
+
 Validate the persistence checkpoint:
 
 ```powershell

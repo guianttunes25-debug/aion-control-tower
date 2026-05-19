@@ -4,9 +4,17 @@ const extensionPath = 'C:\\AI-Company\\projects\\taskmaster\\tools\\browser-exte
 
 const capabilities = [
   'Autorizar uma aba por objetivo',
-  'Observar titulo, URL e acoes visiveis',
+  'Enviar snapshot ao backend local',
+  'Decidir proximo passo com Safety Policy',
   'Destacar botoes, links e campos operaveis',
   'Iniciar pesquisa segura no Google',
+]
+
+const endpoints = [
+  'POST /browser-autopilot/sessions',
+  'POST /browser-autopilot/sessions/{id}/observe',
+  'POST /browser-autopilot/sessions/{id}/decide',
+  'POST /browser-autopilot/sessions/{id}/execution-result',
 ]
 
 const blockedActions = [
@@ -34,7 +42,7 @@ export function BrowserExtensionProject() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300/80">Projeto de extensão</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">AION Browser Autopilot para Chrome/Edge</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
-            Ponte local para operar a aba aberta com permissão humana, mantendo o Control Tower limpo e o navegador como área de execução.
+            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent no backend, que classifica risco e propõe a próxima ação.
           </p>
         </div>
         <span className="rounded-md border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">
@@ -89,6 +97,15 @@ export function BrowserExtensionProject() {
           </ul>
         </article>
       </div>
+
+      <article className="mt-4 rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Cérebro central local</p>
+        <div className="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+          {endpoints.map((endpoint) => (
+            <code key={endpoint} className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-cyan-100">{endpoint}</code>
+          ))}
+        </div>
+      </article>
     </section>
   )
 }
