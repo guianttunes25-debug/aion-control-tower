@@ -3,6 +3,14 @@ import { Led } from '../components/Led'
 
 type AutopilotStatus = 'draft' | 'needs_authorization' | 'authorized' | 'running' | 'waiting_human' | 'completed'
 
+type CourseCandidate = {
+  title: string
+  provider: string
+  url: string
+  reason: string
+  requiresManualSignup: boolean
+}
+
 type BrowserAutopilotSession = {
   id: string
   url: string
@@ -15,6 +23,8 @@ type BrowserAutopilotSession = {
   blockedActions: string[]
   plan: string[]
   activity: string[]
+  courseCandidates?: CourseCandidate[]
+  pendingApproval?: string
 }
 
 const storageKey = 'aion-browser-autopilot-sessions'
@@ -65,8 +75,66 @@ function openExternal(url: string) {
   return Boolean(tab)
 }
 
+function isCourseResearchTask(task: string) {
+  const normalizedTask = task.toLowerCase()
+  return /curso|cursos|aula|estudar|aprend|treinamento|formacao|formação/.test(normalizedTask)
+}
+
+function buildCourseSearchUrl(task: string) {
+  const normalizedTask = task.trim() || 'cursos de IA'
+  return `https://www.google.com/search?q=${encodeURIComponent(`${normalizedTask} curso IA gratuito certificado`)}`
+}
+
+function createCourseCandidates(task: string): CourseCandidate[] {
+  const normalizedTask = task.toLowerCase()
+  const isIntro = normalizedTask.includes('iniciante') || normalizedTask.includes('básico') || normalizedTask.includes('basico')
+  const focus = normalizedTask.includes('automacao') || normalizedTask.includes('automação') ? 'automação com IA' : 'inteligência artificial aplicada'
+
+  return [
+    {
+      title: isIntro ? 'IA para iniciantes - trilha de fundamentos' : `Curso prático de ${focus}`,
+      provider: 'Google Search',
+      url: buildCourseSearchUrl(task),
+      reason: 'Busca ampla para comparar opções, preço, certificado e pré-requisitos antes de escolher.',
+      requiresManualSignup: false,
+    },
+    {
+      title: 'freeCodeCamp - IA, automação e programação aplicada',
+      provider: 'freeCodeCamp / YouTube',
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${task} freecodecamp inteligencia artificial automacao`)}`,
+      reason: 'Bom ponto de partida gratuito para estudar sem barreira de cadastro pesado.',
+      requiresManualSignup: false,
+    },
+    {
+      title: 'Coursera - cursos de IA com opção de certificado',
+      provider: 'Coursera',
+      url: `https://www.coursera.org/search?query=${encodeURIComponent(task || 'artificial intelligence')}`,
+      reason: 'Boa fonte para cursos estruturados; pode exigir conta para matrícula e certificado.',
+      requiresManualSignup: true,
+    },
+    {
+      title: 'edX - fundamentos de IA e automação',
+      provider: 'edX',
+      url: `https://www.edx.org/search?q=${encodeURIComponent(task || 'artificial intelligence')}`,
+      reason: 'Boa fonte acadêmica; matrícula, login e certificado devem ser feitos manualmente.',
+      requiresManualSignup: true,
+    },
+  ]
+}
+
 function createPlan(task: string) {
   const trimmedTask = task.trim() || 'Executar tarefa assistida na pagina autorizada'
+  if (isCourseResearchTask(trimmedTask)) {
+    return [
+      `Confirmar objetivo: ${trimmedTask}`,
+      'Abrir busca de cursos em nova aba.',
+      'Gerar candidatos iniciais de cursos e fontes confiáveis.',
+      'Comparar se exige cadastro, certificado, pagamento ou login.',
+      'Pedir autorização humana antes de abrir cadastro, matrícula ou login.',
+      'Guardar resumo do curso escolhido na memória de aprendizado depois que você colar o conteúdo ou transcrição.',
+    ]
+  }
+
   return [
     `Confirmar objetivo: ${trimmedTask}`,
     'Abrir a pagina e aguardar autorizacao humana antes de atuar.',
@@ -92,6 +160,10 @@ function createSession(url: string, task: string): BrowserAutopilotSession {
       'Sessao criada. AION aguardando autorizacao explicita para atuar nesta pagina.',
     ],
   }
+}
+
+function mergeUniqueActivity(nextItems: string[], currentItems: string[]) {
+  return [...nextItems, ...currentItems].filter((item, index, items) => items.indexOf(item) === index)
 }
 
 function statusLabel(status: AutopilotStatus) {
@@ -169,6 +241,30 @@ export function BrowserAutopilot() {
       return
     }
 
+    if (isCourseResearchTask(selectedSession.task)) {
+      const searchUrl = buildCourseSearchUrl(selectedSession.task)
+      const candidates = createCourseCandidates(selectedSession.task)
+      openExternal(searchUrl)
+
+      setSessions((current) => current.map((session) => (
+        session.id === selectedSession.id
+          ? {
+              ...session,
+              status: 'waiting_human',
+              lastRunAt: new Date().toISOString(),
+              courseCandidates: candidates,
+              pendingApproval: 'Escolha um curso candidato. Se a plataforma pedir cadastro, login, certificado pago ou matrícula, autorize e faça essa etapa manualmente.',
+              activity: mergeUniqueActivity([
+                `Busca automatica aberta: ${searchUrl}`,
+                `Candidatos de curso gerados: ${candidates.map((candidate) => candidate.provider).join(', ')}.`,
+                'AION parou antes de cadastro/login. Proximo passo exige autorizacao humana.',
+              ], session.activity),
+            }
+          : session
+      )))
+      return
+    }
+
     setSessions((current) => current.map((session) => (
       session.id === selectedSession.id
         ? {
@@ -180,6 +276,29 @@ export function BrowserAutopilot() {
               'AION nao vai digitar credenciais, passar captcha, enviar ou publicar sem nova aprovacao.',
               ...session.activity,
             ],
+          }
+        : session
+    )))
+  }
+
+  function authorizeManualSignup(candidate: CourseCandidate) {
+    if (!selectedSession) {
+      return
+    }
+
+    openExternal(candidate.url)
+    setSessions((current) => current.map((session) => (
+      session.id === selectedSession.id
+        ? {
+            ...session,
+            status: 'waiting_human',
+            pendingApproval: `Cadastro/matricula em ${candidate.provider} deve ser feito manualmente por voce. Depois cole resumo, transcricao ou anotacoes no Learning Center.`,
+            activity: mergeUniqueActivity([
+              `Autorizado abrir candidato: ${candidate.title} (${candidate.provider}).`,
+              candidate.requiresManualSignup
+                ? 'Cadastro, login, senha e matricula continuam manuais nesta etapa.'
+                : 'Fonte aberta para estudo. Se aparecer login/captcha/pagamento, pare e peca nova aprovacao.',
+            ], session.activity),
           }
         : session
     )))
@@ -293,6 +412,33 @@ export function BrowserAutopilot() {
                   {selectedSession.plan.map((step, index) => <li key={`${selectedSession.id}-plan-${index}`}>{step}</li>)}
                 </ol>
               </div>
+
+              {selectedSession.courseCandidates && selectedSession.courseCandidates.length > 0 ? (
+                <div className="rounded-md border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm text-cyan-50">
+                  <p className="font-semibold text-white">Cursos encontrados para avaliar</p>
+                  <div className="mt-3 grid gap-2">
+                    {selectedSession.courseCandidates.map((candidate, index) => (
+                      <div key={`${selectedSession.id}-candidate-${index}`} className="rounded-md border border-cyan-300/20 bg-slate-950/70 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-cyan-50">{candidate.title}</p>
+                            <p className="mt-1 text-xs text-cyan-100/70">{candidate.provider} - {candidate.reason}</p>
+                            <p className="mt-1 break-all text-xs text-slate-400">{candidate.url}</p>
+                          </div>
+                          <button className="rounded-md border border-cyan-300/35 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20" type="button" onClick={() => authorizeManualSignup(candidate)}>
+                            {candidate.requiresManualSignup ? 'Autorizar cadastro manual' : 'Abrir para estudar'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedSession.pendingApproval ? (
+                    <div className="mt-3 rounded-md border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                      {selectedSession.pendingApproval}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="rounded-md border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
                 <p className="font-semibold text-white">Atividade</p>
