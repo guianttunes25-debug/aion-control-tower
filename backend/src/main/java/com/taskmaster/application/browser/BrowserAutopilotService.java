@@ -48,6 +48,9 @@ public class BrowserAutopilotService {
                 false,
                 "Observar a pagina ativa antes de agir.",
                 "Nenhum snapshot de pagina foi recebido ainda.",
+                "observe_page",
+                "",
+                true,
                 List.of(),
                 Instant.now()
             );
@@ -66,6 +69,9 @@ public class BrowserAutopilotService {
                 true,
                 "Pedir aprovacao humana antes de cadastro, login, envio, pagamento ou publicacao.",
                 "A pagina ou o objetivo contem acao sensivel.",
+                "request_human_approval",
+                "",
+                false,
                 policyBlocks,
                 Instant.now()
             );
@@ -78,6 +84,9 @@ public class BrowserAutopilotService {
                 false,
                 "Pesquisar cursos de IA gratuitos com certificado e comparar opcoes publicas.",
                 "Busca publica no Google e considerada acao segura nesta fase.",
+                "run_google_search",
+                session.getGoal(),
+                true,
                 List.of(),
                 Instant.now()
             );
@@ -89,6 +98,9 @@ public class BrowserAutopilotService {
                 false,
                 "Ler titulo, secoes e chamadas publicas do curso; parar se aparecer login, matricula ou pagamento.",
                 "Objetivo de curso detectado; extracao publica e permitida sem preencher formularios.",
+                "extract_public_content",
+                "",
+                true,
                 List.of(),
                 Instant.now()
             );
@@ -100,6 +112,9 @@ public class BrowserAutopilotService {
                 false,
                 "Destacar botoes, links e campos visiveis para o humano escolher a proxima acao.",
                 "Nenhuma acao sensivel foi detectada no snapshot atual.",
+                "highlight_safe_actions",
+                "",
+                true,
                 List.of(),
                 Instant.now()
             );
@@ -118,7 +133,10 @@ public class BrowserAutopilotService {
                 suggestion.riskLevel(),
                 suggestion.approvalRequired(),
                 suggestion.nextAction(),
-                "qwen2.5-coder:14b sugeriu: " + nullSafe(suggestion.reason()),
+                "aion-staff sugeriu: " + nullSafe(suggestion.reason()),
+                suggestion.toolName(),
+                suggestion.toolInput(),
+                suggestion.autoExecutable(),
                 List.of(),
                 Instant.now()
             ))

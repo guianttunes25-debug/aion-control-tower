@@ -2,6 +2,7 @@ const taskInput = document.querySelector('#task')
 const authorizeButton = document.querySelector('#authorize')
 const observeButton = document.querySelector('#observe')
 const decideButton = document.querySelector('#decide')
+const executeToolButton = document.querySelector('#execute-tool')
 const runGoogleButton = document.querySelector('#run-google')
 const highlightButton = document.querySelector('#highlight')
 const activityList = document.querySelector('#activity')
@@ -9,6 +10,7 @@ const pageStatus = document.querySelector('#page-status')
 
 const backendBaseUrl = 'http://localhost:8080/browser-autopilot/sessions'
 const defaultTask = 'Pesquisar cursos de IA gratuitos com certificado e parar antes de cadastro ou login'
+let lastDecision = null
 
 function addActivity(text) {
   const item = document.createElement('li')
@@ -19,6 +21,7 @@ function addActivity(text) {
 function setAuthorized(enabled) {
   observeButton.disabled = !enabled
   decideButton.disabled = !enabled
+  executeToolButton.disabled = !enabled || !lastDecision?.autoExecutable
   runGoogleButton.disabled = !enabled
   highlightButton.disabled = !enabled
   pageStatus.textContent = enabled ? 'Autorizado' : 'Aguardando autorizacao'
@@ -126,6 +129,54 @@ async function withFreshSession(tab, task, action) {
   }
 }
 
+async function executeDecisionTool(decision, task) {
+  if (!decision?.autoExecutable) {
+    addActivity('Ferramenta nao executada: decisao exige humano ou nao e automatica.')
+    return null
+  }
+
+  if (decision.toolName === 'observe_page') {
+    const result = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
+    addActivity(`Ferramenta observe_page: ${result.clickables} acoes visiveis.`)
+    return { message: `observe_page executada: ${result.clickables} acoes visiveis`, result }
+  }
+
+  if (decision.toolName === 'highlight_safe_actions') {
+    const result = await sendToActiveTab({ type: 'AION_HIGHLIGHT_ACTIONS' })
+    addActivity(`Ferramenta highlight_safe_actions: ${result.count} acoes destacadas.`)
+    return { message: `highlight_safe_actions executada: ${result.count} acoes destacadas`, result }
+  }
+
+  if (decision.toolName === 'run_google_search') {
+    const result = await sendToActiveTab({ type: 'AION_RUN_GOOGLE_SEARCH', task: decision.toolInput || task })
+    addActivity(`Ferramenta run_google_search: ${result.message}`)
+    return { message: result.message, result }
+  }
+
+  if (decision.toolName === 'extract_public_content') {
+    const result = await sendToActiveTab({ type: 'AION_EXTRACT_PUBLIC_CONTENT' })
+    addActivity(`Ferramenta extract_public_content: ${result.paragraphs.length} trechos publicos extraidos.`)
+    return { message: `extract_public_content executada: ${result.paragraphs.length} trechos publicos extraidos`, result }
+  }
+
+  addActivity(`Ferramenta desconhecida ou bloqueada: ${decision.toolName}`)
+  return null
+}
+
+async function executeLastDecision() {
+  const tab = await getActiveTab()
+  const task = taskInput.value.trim() || defaultTask
+  if (!lastDecision) {
+    addActivity('Nenhuma decisao disponível. Clique em Decidir proximo passo primeiro.')
+    return
+  }
+
+  const execution = await executeDecisionTool(lastDecision, task)
+  if (execution) {
+    await withFreshSession(tab, task, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/execution-result`, { result: execution.message }))
+  }
+}
+
 authorizeButton.addEventListener('click', async () => {
   const tab = await getActiveTab()
   const task = taskInput.value.trim() || defaultTask
@@ -161,15 +212,30 @@ decideButton.addEventListener('click', async () => {
       await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
       return postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
     })
+    lastDecision = decision
+    executeToolButton.disabled = !decision.autoExecutable
     addActivity(`Decisao: ${decision.actionType} / risco ${decision.riskLevel}. ${decision.nextAction}`)
+    if (decision.toolName) {
+      addActivity(`Ferramenta sugerida: ${decision.toolName}${decision.autoExecutable ? ' (auto segura)' : ' (manual)'}`)
+    }
     if (decision.reason) {
       addActivity(`Motivo: ${decision.reason}`)
     }
     if (decision.approvalRequired) {
       addActivity('Aprovacao humana obrigatoria antes de executar esta acao.')
+    } else if (decision.autoExecutable) {
+      await executeLastDecision()
     }
   } catch (error) {
     addActivity(`Falha ao decidir: ${error.message}`)
+  }
+})
+
+executeToolButton.addEventListener('click', async () => {
+  try {
+    await executeLastDecision()
+  } catch (error) {
+    addActivity(`Falha ao executar ferramenta: ${error.message}`)
   }
 })
 

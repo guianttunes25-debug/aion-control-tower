@@ -134,7 +134,19 @@ POST /browser-autopilot/sessions/{id}/decide
 POST /browser-autopilot/sessions/{id}/execution-result
 ```
 
-The backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, asks `qwen2.5-coder:14b` through Ollama when page reasoning is useful, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
+The backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, asks `aion-staff` through Ollama when page reasoning is useful, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
+
+Browser Autopilot safe tool catalog:
+
+```text
+observe_page
+highlight_safe_actions
+run_google_search
+extract_public_content
+request_human_approval
+```
+
+The backend returns `toolName`, `toolInput`, and `autoExecutable` in each decision. The extension may execute only safe auto tools. Sensitive actions still require human approval and are not auto-executed.
 
 ## AION Staff Local Model
 

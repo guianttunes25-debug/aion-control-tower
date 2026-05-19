@@ -10,6 +10,9 @@ public record BrowserAutopilotDecision(
     boolean approvalRequired,
     String nextAction,
     String reason,
+    String toolName,
+    String toolInput,
+    boolean autoExecutable,
     List<String> blockedByPolicy,
     Instant decidedAt
 ) {

@@ -78,6 +78,27 @@ function runGoogleSearch(task) {
   return 'Pesquisa iniciada. AION nao fara cadastro, login, captcha, matricula ou pagamento.'
 }
 
+function extractPublicContent() {
+  const paragraphs = [...document.querySelectorAll('p, li, article, main')]
+    .map(visibleText)
+    .filter((text) => text.length > 40)
+    .slice(0, 12)
+
+  const links = [...document.querySelectorAll('a[href]')]
+    .filter(isVisible)
+    .map((link) => ({ text: visibleText(link).slice(0, 120), href: link.href }))
+    .filter((link) => link.text && link.href)
+    .slice(0, 12)
+
+  return {
+    title: document.title,
+    url: location.href,
+    headings: [...document.querySelectorAll('h1, h2, h3')].map(visibleText).filter(Boolean).slice(0, 12),
+    paragraphs,
+    links,
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'AION_OBSERVE_PAGE') {
     sendResponse(observePage())
@@ -91,6 +112,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'AION_RUN_GOOGLE_SEARCH') {
     sendResponse({ message: runGoogleSearch(message.task || 'cursos de IA') })
+    return true
+  }
+
+  if (message.type === 'AION_EXTRACT_PUBLIC_CONTENT') {
+    sendResponse(extractPublicContent())
     return true
   }
 

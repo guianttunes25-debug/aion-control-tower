@@ -5,6 +5,9 @@ public record LlmBrowserDecision(
     String riskLevel,
     boolean approvalRequired,
     String nextAction,
-    String reason
+    String reason,
+    String toolName,
+    String toolInput,
+    boolean autoExecutable
 ) {
 }

@@ -128,13 +128,16 @@ public class BrowserAutopilotLlmService {
         String riskLevel = normalizeRisk(stringValue(parsed.get("riskLevel")));
         String nextAction = stringValue(parsed.get("nextAction"));
         String reason = stringValue(parsed.get("reason"));
+        String toolName = normalizeToolName(stringValue(parsed.get("toolName")), actionType);
+        String toolInput = stringValue(parsed.get("toolInput"));
 
         if (actionType.isBlank() || nextAction.isBlank()) {
             return Optional.empty();
         }
 
         boolean approvalRequired = Boolean.TRUE.equals(parsed.get("approvalRequired")) || "HIGH".equals(riskLevel);
-        return Optional.of(new LlmBrowserDecision(actionType, riskLevel, approvalRequired, nextAction, reason));
+        boolean autoExecutable = Boolean.TRUE.equals(parsed.get("autoExecutable")) && !approvalRequired && isSafeAutoTool(toolName);
+        return Optional.of(new LlmBrowserDecision(actionType, riskLevel, approvalRequired, nextAction, reason, toolName, toolInput, autoExecutable));
     }
 
     private String systemPrompt() {
@@ -142,8 +145,10 @@ public class BrowserAutopilotLlmService {
             + "Nunca sugira digitar senha, token, captcha, pagamento, publicacao, envio de formulario, cadastro ou matricula. "
             + "Quando encontrar acao sensivel, use actionType REQUEST_HUMAN_APPROVAL, riskLevel HIGH e approvalRequired true. "
             + "Acoes permitidas: OBSERVE_PAGE, RUN_SEARCH, EXTRACT_PUBLIC_CONTENT, HIGHLIGHT_SAFE_ACTIONS, REQUEST_HUMAN_APPROVAL. "
+                + "Ferramentas disponiveis: observe_page, run_google_search, extract_public_content, highlight_safe_actions, request_human_approval. "
+                + "Use autoExecutable true somente para observe_page, run_google_search, extract_public_content ou highlight_safe_actions quando o risco for LOW ou MEDIUM. "
             + "Antes de decidir, considere seguranca, reversibilidade, observabilidade e manutencao. "
-            + "Formato: {\"actionType\":\"...\",\"riskLevel\":\"LOW|MEDIUM|HIGH\",\"approvalRequired\":false,\"nextAction\":\"...\",\"reason\":\"...\"}.";
+                + "Formato: {\"actionType\":\"...\",\"riskLevel\":\"LOW|MEDIUM|HIGH\",\"approvalRequired\":false,\"nextAction\":\"...\",\"reason\":\"...\",\"toolName\":\"...\",\"toolInput\":\"...\",\"autoExecutable\":true}.";
     }
 
     private String userPrompt(BrowserAutopilotSession session, BrowserAutopilotObserveCommand observation) {
@@ -166,6 +171,28 @@ public class BrowserAutopilotLlmService {
             return normalized;
         }
         return "MEDIUM";
+    }
+
+    private String normalizeToolName(String toolName, String actionType) {
+        String normalized = toolName.toLowerCase().replace('-', '_').trim();
+        if (isKnownTool(normalized)) {
+            return normalized;
+        }
+        return switch (actionType) {
+            case "OBSERVE_PAGE" -> "observe_page";
+            case "RUN_SEARCH" -> "run_google_search";
+            case "EXTRACT_PUBLIC_CONTENT" -> "extract_public_content";
+            case "HIGHLIGHT_SAFE_ACTIONS" -> "highlight_safe_actions";
+            default -> "request_human_approval";
+        };
+    }
+
+    private boolean isKnownTool(String toolName) {
+        return List.of("observe_page", "run_google_search", "extract_public_content", "highlight_safe_actions", "request_human_approval").contains(toolName);
+    }
+
+    private boolean isSafeAutoTool(String toolName) {
+        return List.of("observe_page", "run_google_search", "extract_public_content", "highlight_safe_actions").contains(toolName);
     }
 
     private String stringValue(Object value) {
