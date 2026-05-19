@@ -112,6 +112,12 @@ decideButton.addEventListener('click', async () => {
     await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
     const decision = await postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
     addActivity(`Decisao: ${decision.actionType} / risco ${decision.riskLevel}. ${decision.nextAction}`)
+    if (decision.reason) {
+      addActivity(`Motivo: ${decision.reason}`)
+    }
+    if (decision.approvalRequired) {
+      addActivity('Aprovacao humana obrigatoria antes de executar esta acao.')
+    }
   } catch (error) {
     addActivity(`Falha ao decidir: ${error.message}`)
   }

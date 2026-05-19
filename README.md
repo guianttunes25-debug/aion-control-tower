@@ -134,7 +134,7 @@ POST /browser-autopilot/sessions/{id}/decide
 POST /browser-autopilot/sessions/{id}/execution-result
 ```
 
-The first backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, proposes the next action, and requires human approval for sensitive actions. The LLM layer can be attached after this contract is stable.
+The backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, asks `qwen2.5-coder:14b` through Ollama when page reasoning is useful, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
 
 Validate the persistence checkpoint:
 

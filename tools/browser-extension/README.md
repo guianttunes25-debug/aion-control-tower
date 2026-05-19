@@ -26,6 +26,8 @@ Extensao local para transformar uma aba aberta do Chrome/Edge em uma superficie 
 - Observa a pagina ativa e lista acoes visiveis.
 - Cria uma sessao no backend local do AION.
 - Envia snapshots para o `BrowserAutopilotAgent` decidir a proxima acao segura.
+- Usa o `qwen2.5-coder:14b` via Ollama quando o backend precisa raciocinar sobre a pagina.
+- Cai para regras deterministicas se o Ollama estiver offline ou demorar.
 - Destaca botoes, links e campos de formulario.
 - Executa uma pesquisa segura no Google quando autorizado.
 - Abre Google em nova aba quando a aba atual nao e Google.
@@ -47,5 +49,7 @@ POST http://localhost:8080/browser-autopilot/sessions/{id}/observe
 POST http://localhost:8080/browser-autopilot/sessions/{id}/decide
 POST http://localhost:8080/browser-autopilot/sessions/{id}/execution-result
 ```
+
+O backend consulta o Ollama em `http://localhost:11434` com o modelo `qwen2.5-coder:14b`. A Safety Policy continua sendo obrigatoria e bloqueia acoes sensiveis mesmo quando o modelo sugerir algo arriscado.
 
 O proximo passo e permitir que a extensao execute apenas comandos aprovados pelo backend, como clicar em um seletor publico ou preencher um campo nao sensivel.

@@ -18,6 +18,11 @@ public class BrowserAutopilotService {
     );
 
     private final Map<String, BrowserAutopilotSession> sessions = new ConcurrentHashMap<>();
+    private final BrowserAutopilotLlmService llmService;
+
+    public BrowserAutopilotService(BrowserAutopilotLlmService llmService) {
+        this.llmService = llmService;
+    }
 
     public BrowserAutopilotSession createSession(String goal, String startUrl) {
         BrowserAutopilotSession session = new BrowserAutopilotSession("BA-" + UUID.randomUUID(), goal, startUrl);
@@ -64,6 +69,7 @@ public class BrowserAutopilotService {
                 policyBlocks,
                 Instant.now()
             );
+        } else if ((decision = tryLlmDecision(session, observation)) != null) {
         } else if (isGooglePage(observation.url()) && isCourseGoal(session.getGoal())) {
             decision = new BrowserAutopilotDecision(
                 sessionId,
@@ -101,6 +107,33 @@ public class BrowserAutopilotService {
 
         session.decide(decision);
         return decision;
+    }
+
+    private BrowserAutopilotDecision tryLlmDecision(BrowserAutopilotSession session, BrowserAutopilotObserveCommand observation) {
+        return llmService.suggest(session, observation)
+            .filter(this::isAllowedLlmDecision)
+            .map(suggestion -> new BrowserAutopilotDecision(
+                session.getId(),
+                suggestion.actionType(),
+                suggestion.riskLevel(),
+                suggestion.approvalRequired(),
+                suggestion.nextAction(),
+                "qwen2.5-coder:14b sugeriu: " + nullSafe(suggestion.reason()),
+                List.of(),
+                Instant.now()
+            ))
+            .orElse(null);
+    }
+
+    private boolean isAllowedLlmDecision(LlmBrowserDecision suggestion) {
+        if (suggestion.nextAction().isBlank()) {
+            return false;
+        }
+        if (suggestion.approvalRequired() || "HIGH".equals(suggestion.riskLevel())) {
+            return true;
+        }
+        String nextAction = suggestion.nextAction().toLowerCase(Locale.ROOT);
+        return !nextAction.matches(".*(digitar|preencher|enviar|submeter|pagar|comprar|publicar|matricular|cadastrar).*(senha|token|captcha|pagamento|checkout|formulario|formulário|proposta|mensagem|login|cadastro|matricula|matrícula).*");
     }
 
     public BrowserAutopilotSession recordExecution(String sessionId, String result) {

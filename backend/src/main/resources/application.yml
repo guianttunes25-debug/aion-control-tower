@@ -21,3 +21,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+aion:
+  browser-autopilot:
+    llm:
+      enabled: true
+      base-url: http://localhost:11434
+      model: qwen2.5-coder:14b
