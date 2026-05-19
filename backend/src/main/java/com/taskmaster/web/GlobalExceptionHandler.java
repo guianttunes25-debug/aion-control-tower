@@ -1,5 +1,6 @@
 package com.taskmaster.web;
 
+import com.taskmaster.application.browser.BrowserAutopilotSessionNotFoundException;
 import com.taskmaster.application.task.TaskNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -30,8 +31,8 @@ public class GlobalExceptionHandler {
         ));
     }
 
-    @ExceptionHandler(TaskNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleNotFound(TaskNotFoundException exception, HttpServletRequest request) {
+    @ExceptionHandler({ TaskNotFoundException.class, BrowserAutopilotSessionNotFoundException.class })
+    public ResponseEntity<ApiErrorResponse> handleNotFound(RuntimeException exception, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(
             Instant.now(),
             HttpStatus.NOT_FOUND.value(),

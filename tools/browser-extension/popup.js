@@ -32,10 +32,38 @@ async function postJson(url, body) {
   })
 
   if (!response.ok) {
-    throw new Error(`Backend retornou ${response.status}`)
+    throw await backendError(response)
   }
 
   return response.json()
+}
+
+async function getJson(url) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw await backendError(response)
+  }
+
+  return response.json()
+}
+
+async function backendError(response) {
+  let message = `Backend retornou ${response.status}`
+  try {
+    const payload = await response.json()
+    if (payload?.message) {
+      message = `${message}: ${payload.message}`
+    }
+  } catch {
+    // Response body may be empty or non-JSON.
+  }
+  const error = new Error(message)
+  error.status = response.status
+  return error
 }
 
 async function getActiveTab() {
@@ -64,8 +92,15 @@ async function loadState() {
 
 async function ensureBackendSession(tab, task) {
   const stored = await chrome.storage.local.get([`session:${tab.id}`])
-  if (stored[`session:${tab.id}`]) {
-    return stored[`session:${tab.id}`]
+  const storedSessionId = stored[`session:${tab.id}`]
+  if (storedSessionId) {
+    try {
+      await getJson(`${backendBaseUrl}/${storedSessionId}`)
+      return storedSessionId
+    } catch (error) {
+      await chrome.storage.local.remove(`session:${tab.id}`)
+      addActivity('Sessao backend expirada. Criando nova sessao local.')
+    }
   }
 
   const response = await postJson(backendBaseUrl, {
@@ -74,6 +109,21 @@ async function ensureBackendSession(tab, task) {
   })
   await chrome.storage.local.set({ [`session:${tab.id}`]: response.id })
   return response.id
+}
+
+async function withFreshSession(tab, task, action) {
+  let sessionId = await ensureBackendSession(tab, task)
+  try {
+    return await action(sessionId)
+  } catch (error) {
+    if (error.status === 404 || error.status === 500) {
+      await chrome.storage.local.remove(`session:${tab.id}`)
+      addActivity('Sessao backend perdeu estado. Recriando e tentando de novo.')
+      sessionId = await ensureBackendSession(tab, task)
+      return action(sessionId)
+    }
+    throw error
+  }
 }
 
 authorizeButton.addEventListener('click', async () => {
@@ -94,9 +144,8 @@ observeButton.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab()
     const task = taskInput.value.trim() || defaultTask
-    const sessionId = await ensureBackendSession(tab, task)
     const result = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
-    await postJson(`${backendBaseUrl}/${sessionId}/observe`, result)
+    await withFreshSession(tab, task, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/observe`, result))
     addActivity(`Pagina observada: ${result.title || 'sem titulo'}; ${result.clickables} acoes visiveis.`)
   } catch (error) {
     addActivity(`Falha ao observar pagina: ${error.message}`)
@@ -107,10 +156,11 @@ decideButton.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab()
     const task = taskInput.value.trim() || defaultTask
-    const sessionId = await ensureBackendSession(tab, task)
     const snapshot = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
-    await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
-    const decision = await postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
+    const decision = await withFreshSession(tab, task, async (sessionId) => {
+      await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
+      return postJson(`${backendBaseUrl}/${sessionId}/decide`, {})
+    })
     addActivity(`Decisao: ${decision.actionType} / risco ${decision.riskLevel}. ${decision.nextAction}`)
     if (decision.reason) {
       addActivity(`Motivo: ${decision.reason}`)
@@ -127,10 +177,9 @@ runGoogleButton.addEventListener('click', async () => {
   try {
     const task = taskInput.value.trim() || defaultTask
     const tab = await getActiveTab()
-    const sessionId = await ensureBackendSession(tab, task)
     await chrome.storage.local.set({ task })
     const result = await sendToActiveTab({ type: 'AION_RUN_GOOGLE_SEARCH', task })
-    await postJson(`${backendBaseUrl}/${sessionId}/execution-result`, { result: result.message })
+    await withFreshSession(tab, task, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/execution-result`, { result: result.message }))
     addActivity(result.message)
   } catch (error) {
     addActivity(`Falha ao pesquisar: ${error.message}`)

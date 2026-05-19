@@ -145,7 +145,7 @@ public class BrowserAutopilotService {
     public BrowserAutopilotSession getSession(String sessionId) {
         BrowserAutopilotSession session = sessions.get(sessionId);
         if (session == null) {
-            throw new IllegalArgumentException("Browser autopilot session not found: " + sessionId);
+            throw new BrowserAutopilotSessionNotFoundException(sessionId);
         }
         return session;
     }
