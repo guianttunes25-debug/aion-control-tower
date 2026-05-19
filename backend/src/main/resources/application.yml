@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: taskmaster-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5433/taskmaster
+    username: taskmaster_app
+    password: taskmaster_local_dev_password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

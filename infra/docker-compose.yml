@@ -1,0 +1,29 @@
+name: taskmaster
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskmaster-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: taskmaster
+      POSTGRES_USER: taskmaster_app
+      POSTGRES_PASSWORD: taskmaster_local_dev_password
+    volumes:
+      - taskmaster_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskmaster_app -d taskmaster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - taskmaster_local
+
+volumes:
+  taskmaster_postgres_data:
+
+networks:
+  taskmaster_local:
