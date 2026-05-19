@@ -4,6 +4,7 @@ const extensionPath = 'C:\\AI-Company\\projects\\taskmaster\\tools\\browser-exte
 
 const capabilities = [
   'Autorizar uma aba por objetivo',
+  'Responder perguntas em linguagem humana',
   'Enviar snapshot ao backend local',
   'Decidir com Safety Policy + aion-staff',
   'Executar ferramenta segura sugerida',
@@ -24,6 +25,7 @@ const tools = [
 const endpoints = [
   'POST /browser-autopilot/sessions',
   'POST /browser-autopilot/sessions/{id}/observe',
+  'POST /browser-autopilot/sessions/{id}/ask',
   'POST /browser-autopilot/sessions/{id}/decide',
   'POST /browser-autopilot/sessions/{id}/execution-result',
 ]
@@ -53,7 +55,7 @@ export function BrowserExtensionProject() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300/80">Projeto de extensão</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">AION Browser Autopilot para Chrome/Edge</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
-            Ponte local para operar a aba aberta com permissão humana. A extensão envia snapshots para o BrowserAutopilotAgent, que aplica Safety Policy, usa o modelo local aion-staff, escolhe ferramentas seguras e pode executar um auto loop curto até encontrar risco ou precisar de humano.
+            Ponte local para conversar sobre a página e operar a aba aberta com permissão humana. A extensão envia perguntas e snapshots para o BrowserAutopilotAgent, que aplica Safety Policy, usa o modelo local aion-staff, responde em linguagem humana, escolhe ferramentas seguras e pode executar um auto loop curto até encontrar risco ou precisar de humano.
           </p>
         </div>
         <span className="rounded-md border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">
@@ -113,6 +115,9 @@ export function BrowserExtensionProject() {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Cérebro central local</p>
         <p className="mt-2 text-sm text-slate-400">
           O modelo local aion-staff entra como consultor. Se o Ollama estiver offline ou a ação for sensível, o backend mantém decisão determinística e exige humano.
+        </p>
+        <p className="mt-2 text-sm text-slate-400">
+          O botão Perguntar funciona como um mini chat: usa o contexto da página observada, responde no popup e pode iniciar pesquisa segura quando a pergunta pedir busca externa.
         </p>
         <p className="mt-2 text-sm text-slate-400">
           O Auto Loop roda no máximo 3 passos seguros, para em ações repetidas, pausa após navegação/pesquisa e nunca executa ferramentas que exijam aprovação humana.

@@ -120,7 +120,7 @@ Use it on `https://www.google.com`:
 1. Open the extension popup.
 2. Enter a goal like `Pesquisar cursos de IA gratuitos com certificado`.
 3. Click `Autorizar nesta pagina`.
-4. Click `Observar pagina`, `Pesquisar no Google`, or `Destacar acoes`.
+4. Ask with `Perguntar`, or click `Observar pagina`, `Pesquisar no Google`, or `Destacar acoes`.
 
 The extension does not type passwords, solve captchas, submit forms, publish, pay, enroll, or send messages without an explicit future approval flow.
 
@@ -130,11 +130,14 @@ Browser Autopilot central brain endpoints:
 POST /browser-autopilot/sessions
 GET  /browser-autopilot/sessions
 POST /browser-autopilot/sessions/{id}/observe
+POST /browser-autopilot/sessions/{id}/ask
 POST /browser-autopilot/sessions/{id}/decide
 POST /browser-autopilot/sessions/{id}/execution-result
 ```
 
-The backend brain is the `BrowserAutopilotAgent`: it receives page snapshots from the extension, applies deterministic safety policy, asks `aion-staff` through Ollama when page reasoning is useful, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
+The backend brain is the `BrowserAutopilotAgent`: it receives questions and page snapshots from the extension, applies deterministic safety policy, asks `aion-staff` through Ollama when page reasoning is useful, answers in human language, proposes the next action, and requires human approval for sensitive actions. If Ollama is unavailable, the deterministic decision path remains active.
+
+The `Perguntar` flow works as a mini local chat. The popup observes the active page when possible, sends the question to `POST /browser-autopilot/sessions/{id}/ask`, shows the answer in the extension, and can start a safe Google search when the question clearly asks for external research.
 
 Browser Autopilot safe tool catalog:
 

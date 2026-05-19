@@ -41,6 +41,12 @@ public class BrowserAutopilotSession {
         this.activity.add(0, "Resultado registrado: " + nullSafe(result));
     }
 
+    public void recordAnswer(String question, String answer) {
+        this.status = "ANSWERED";
+        this.activity.add(0, "Pergunta respondida: " + nullSafe(question));
+        this.activity.add(0, "Resposta AION: " + nullSafe(answer));
+    }
+
     public String getId() {
         return id;
     }

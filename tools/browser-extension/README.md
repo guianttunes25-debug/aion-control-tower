@@ -14,23 +14,26 @@ Extensao local para transformar uma aba aberta do Chrome/Edge em uma superficie 
 
 1. Abra `https://www.google.com`.
 2. Clique na extensao `AION Browser Autopilot`.
-3. Escreva o objetivo, por exemplo: `Pesquisar cursos de IA gratuitos com certificado`.
+3. Escreva uma pergunta ou objetivo, por exemplo: `Qual curso gratuito de IA e melhor para iniciante?`.
 4. Clique em `Autorizar nesta pagina`.
-5. Clique em `Observar pagina` para capturar titulo, URL e acoes visiveis.
-6. Clique em `Decidir proximo passo` para enviar o snapshot ao `BrowserAutopilotAgent` local.
-7. Quando a decisao sugerir uma ferramenta segura, a extensao executa automaticamente e tambem libera `Executar ferramenta segura` para repetir a acao.
-8. Use `Auto loop seguro` para rodar ate 3 ciclos observar-decidir-executar.
-9. Clique em `Pesquisar no Google` para iniciar a busca manualmente quando quiser.
-10. Em paginas de curso, use `Destacar acoes` para visualizar links, botoes e campos que o AION poderia operar com autorizacao futura.
+5. Use `Perguntar` para receber uma resposta humana usando o contexto da pagina quando disponivel.
+6. Clique em `Observar pagina` para capturar titulo, URL e acoes visiveis.
+7. Clique em `Decidir proximo passo` para enviar o snapshot ao `BrowserAutopilotAgent` local.
+8. Quando a decisao sugerir uma ferramenta segura, a extensao executa automaticamente e tambem libera `Executar ferramenta segura` para repetir a acao.
+9. Use `Auto loop seguro` para rodar ate 3 ciclos observar-decidir-executar.
+10. Clique em `Pesquisar no Google` para iniciar a busca manualmente quando quiser.
+11. Em paginas de curso, use `Destacar acoes` para visualizar links, botoes e campos que o AION poderia operar com autorizacao futura.
 
 ## O que ela faz
 
 - Observa a pagina ativa e lista acoes visiveis.
 - Cria uma sessao no backend local do AION.
+- Responde perguntas em linguagem humana dentro do popup.
 - Envia snapshots para o `BrowserAutopilotAgent` decidir a proxima acao segura.
 - Usa o `qwen2.5-coder:14b` via Ollama quando o backend precisa raciocinar sobre a pagina.
 - Cai para regras deterministicas se o Ollama estiver offline ou demorar.
 - Recebe `toolName`, `toolInput` e `autoExecutable` do backend.
+- Pode iniciar uma pesquisa segura quando a pergunta pede busca externa.
 - Executa ferramentas seguras como `observe_page`, `highlight_safe_actions`, `run_google_search` e `extract_public_content`.
 - Roda Auto Loop seguro com limite de 3 passos.
 - Para o Auto Loop quando encontra risco alto, exige humano, repete a mesma acao ou inicia navegacao/pesquisa.
@@ -52,6 +55,7 @@ O ciclo local atual ja usa os endpoints:
 ```text
 POST http://localhost:8080/browser-autopilot/sessions
 POST http://localhost:8080/browser-autopilot/sessions/{id}/observe
+POST http://localhost:8080/browser-autopilot/sessions/{id}/ask
 POST http://localhost:8080/browser-autopilot/sessions/{id}/decide
 POST http://localhost:8080/browser-autopilot/sessions/{id}/execution-result
 ```

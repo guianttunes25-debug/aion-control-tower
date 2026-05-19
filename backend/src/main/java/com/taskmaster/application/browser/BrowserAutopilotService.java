@@ -124,6 +124,43 @@ public class BrowserAutopilotService {
         return decision;
     }
 
+    public BrowserAutopilotAnswer ask(String sessionId, String question) {
+        BrowserAutopilotSession session = getSession(sessionId);
+        BrowserAutopilotObserveCommand observation = session.getLastObservation();
+        String normalizedQuestion = nullSafe(question);
+        List<String> blocks = policyBlocksForQuestion(normalizedQuestion);
+
+        BrowserAutopilotAnswer answer;
+        if (!blocks.isEmpty()) {
+            answer = new BrowserAutopilotAnswer(
+                sessionId,
+                "Posso te orientar, mas nao vou executar cadastro, login, senha, captcha, pagamento, envio ou publicacao. O passo seguro e separar as informacoes publicas e pedir sua confirmacao antes de qualquer acao sensivel.",
+                observation != null,
+                "request_human_approval",
+                "",
+                false,
+                true,
+                Instant.now()
+            );
+        } else {
+            String llmAnswer = llmService.answer(session, normalizedQuestion).orElseGet(() -> fallbackAnswer(session, observation, normalizedQuestion));
+            String suggestedTool = shouldSearch(normalizedQuestion, observation) ? "run_google_search" : "";
+            answer = new BrowserAutopilotAnswer(
+                sessionId,
+                llmAnswer,
+                observation != null,
+                suggestedTool,
+                suggestedTool.isBlank() ? "" : normalizedQuestion,
+                !suggestedTool.isBlank(),
+                false,
+                Instant.now()
+            );
+        }
+
+        session.recordAnswer(normalizedQuestion, answer.answer());
+        return answer;
+    }
+
     private BrowserAutopilotDecision tryLlmDecision(BrowserAutopilotSession session, BrowserAutopilotObserveCommand observation) {
         return llmService.suggest(session, observation)
             .filter(this::isAllowedLlmDecision)
@@ -193,6 +230,35 @@ public class BrowserAutopilotService {
             blocks.add("Objetivo pede acao sensivel explicita");
         }
         return blocks.stream().distinct().limit(8).toList();
+    }
+
+    private List<String> policyBlocksForQuestion(String question) {
+        String normalized = nullSafe(question).toLowerCase(Locale.ROOT);
+        List<String> blocks = new ArrayList<>();
+        for (String term : SENSITIVE_TERMS) {
+            if (normalized.contains(term)) {
+                blocks.add("Pergunta contem termo sensivel: " + term);
+            }
+        }
+        return blocks.stream().distinct().limit(8).toList();
+    }
+
+    private boolean shouldSearch(String question, BrowserAutopilotObserveCommand observation) {
+        String normalized = nullSafe(question).toLowerCase(Locale.ROOT);
+        boolean asksSearch = normalized.matches(".*(pesquis|procure|buscar|busca|encontr|ache|google|curso|noticia|preco|preço|melhor).* ")
+            || normalized.matches(".*(pesquis|procure|buscar|busca|encontr|ache|google|curso|noticia|preco|preço|melhor).*$");
+        boolean pageHasLittleContext = observation == null || safeList(observation.headings()).isEmpty();
+        return asksSearch && pageHasLittleContext;
+    }
+
+    private String fallbackAnswer(BrowserAutopilotSession session, BrowserAutopilotObserveCommand observation, String question) {
+        if (shouldSearch(question, observation)) {
+            return "Posso pesquisar isso para voce com uma busca segura no Google. Vou parar antes de login, cadastro, matricula, pagamento ou envio de formulario.";
+        }
+        if (observation != null) {
+            return "Pelo contexto da pagina atual, vejo: " + nullSafe(observation.title()) + ". Posso te ajudar a analisar os links e proximos passos seguros sem executar nada sensivel.";
+        }
+        return "Posso responder com o que sei localmente ou observar a pagina atual para usar contexto. Para pesquisar na web, autorize a aba e use uma busca segura.";
     }
 
     private boolean isGooglePage(String url) {

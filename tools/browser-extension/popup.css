@@ -96,3 +96,22 @@ li {
 .guardrails li {
   color: #f8c77e;
 }
+
+.answer-panel {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #263442;
+  border-radius: 6px;
+  background: #121a22;
+}
+
+#answer {
+  max-height: 132px;
+  overflow-y: auto;
+  color: #e6edf5;
+  font-size: 13px;
+  line-height: 1.42;
+  white-space: pre-wrap;
+}

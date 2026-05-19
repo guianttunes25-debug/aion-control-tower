@@ -1,5 +1,6 @@
 const taskInput = document.querySelector('#task')
 const authorizeButton = document.querySelector('#authorize')
+const askButton = document.querySelector('#ask')
 const observeButton = document.querySelector('#observe')
 const decideButton = document.querySelector('#decide')
 const executeToolButton = document.querySelector('#execute-tool')
@@ -9,9 +10,10 @@ const runGoogleButton = document.querySelector('#run-google')
 const highlightButton = document.querySelector('#highlight')
 const activityList = document.querySelector('#activity')
 const pageStatus = document.querySelector('#page-status')
+const answerBox = document.querySelector('#answer')
 
 const backendBaseUrl = 'http://localhost:8080/browser-autopilot/sessions'
-const defaultTask = 'Pesquisar cursos de IA gratuitos com certificado e parar antes de cadastro ou login'
+const defaultTask = 'Qual curso gratuito de IA ou Java backend e melhor para iniciante?'
 let lastDecision = null
 let autoLoopRunning = false
 
@@ -35,6 +37,10 @@ function setAuthorized(enabled) {
 function setLoopRunning(enabled) {
   autoLoopRunning = enabled
   setAuthorized(true)
+}
+
+function setAnswer(text) {
+  answerBox.textContent = text || 'Sem resposta ainda.'
 }
 
 async function postJson(url, body) {
@@ -222,6 +228,46 @@ async function decideNextStep(tab, task) {
   return decision
 }
 
+async function askAion() {
+  const tab = await getActiveTab()
+  const question = taskInput.value.trim() || defaultTask
+  await chrome.storage.local.set({ task: question })
+  setAnswer('Pensando com o aion-staff...')
+
+  const answer = await withFreshSession(tab, question, async (sessionId) => {
+    try {
+      const snapshot = await sendToActiveTab({ type: 'AION_OBSERVE_PAGE' })
+      await postJson(`${backendBaseUrl}/${sessionId}/observe`, snapshot)
+    } catch (error) {
+      addActivity(`Pergunta sem contexto da pagina: ${error.message}`)
+    }
+    return postJson(`${backendBaseUrl}/${sessionId}/ask`, { question })
+  })
+
+  setAnswer(answer.answer)
+  addActivity(`AION respondeu${answer.usedPageContext ? ' usando contexto da pagina' : ' sem contexto de pagina'}.`)
+
+  if (answer.approvalRequired) {
+    addActivity('AION pausou: esta pergunta envolve acao sensivel e precisa de humano.')
+    return
+  }
+
+  if (answer.autoExecutable && answer.suggestedToolName) {
+    const decision = {
+      autoExecutable: answer.autoExecutable,
+      toolName: answer.suggestedToolName,
+      toolInput: answer.suggestedToolInput,
+    }
+    const execution = await executeDecisionTool(decision, question)
+    if (execution) {
+      await withFreshSession(tab, question, (sessionId) => postJson(`${backendBaseUrl}/${sessionId}/execution-result`, {
+        result: `pergunta executou ${answer.suggestedToolName}: ${execution.message}`,
+      }))
+      addActivity('Pesquisa segura iniciada. Depois que a pagina carregar, pergunte de novo para resumir os resultados.')
+    }
+  }
+}
+
 async function executeLastDecision() {
   const tab = await getActiveTab()
   const task = taskInput.value.trim() || defaultTask
@@ -311,6 +357,18 @@ authorizeButton.addEventListener('click', async () => {
   await chrome.storage.local.set({ task, [`authorized:${tab.id}`]: true })
   setAuthorized(true)
   addActivity(sessionId ? `Autorizacao concedida. Sessao ${sessionId}.` : 'Autorizacao concedida localmente para esta aba.')
+})
+
+askButton.addEventListener('click', async () => {
+  askButton.disabled = true
+  try {
+    await askAion()
+  } catch (error) {
+    setAnswer(`Nao consegui responder agora: ${error.message}`)
+    addActivity(`Falha ao perguntar: ${error.message}`)
+  } finally {
+    askButton.disabled = false
+  }
 })
 
 observeButton.addEventListener('click', async () => {

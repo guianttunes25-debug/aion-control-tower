@@ -112,6 +112,66 @@ public class BrowserAutopilotLlmService {
         }
     }
 
+    public Optional<String> answer(BrowserAutopilotSession session, String question) {
+        if (!enabled) {
+            return Optional.empty();
+        }
+
+        try {
+            BrowserAutopilotObserveCommand observation = session.getLastObservation();
+            String requestBody = objectMapper.writeValueAsString(Map.of(
+                "model", model,
+                "stream", false,
+                "keep_alive", keepAlive,
+                "options", Map.of(
+                    "temperature", temperature,
+                    "num_ctx", numCtx,
+                    "num_predict", Math.max(numPredict, 480)
+                ),
+                "messages", List.of(
+                    Map.of(
+                        "role", "system",
+                        "content", answerSystemPrompt()
+                    ),
+                    Map.of(
+                        "role", "user",
+                        "content", answerUserPrompt(session, observation, question)
+                    )
+                )
+            ));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/chat"))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                return Optional.empty();
+            }
+
+            Map<String, Object> payload = objectMapper.readValue(response.body(), new TypeReference<>() { });
+            Object message = payload.get("message");
+            if (!(message instanceof Map<?, ?> messageMap)) {
+                return Optional.empty();
+            }
+
+            Object content = messageMap.get("content");
+            if (!(content instanceof String rawContent) || rawContent.isBlank()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(rawContent.trim());
+        } catch (IOException | InterruptedException | RuntimeException exception) {
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            return Optional.empty();
+        }
+    }
+
     private Optional<LlmBrowserDecision> parseDecision(String rawContent) throws IOException {
         String content = rawContent.trim()
             .replace("```json", "")
@@ -159,6 +219,31 @@ public class BrowserAutopilotLlmService {
             + "\nAcoes visiveis: " + safeJoin(observation.actionLabels())
             + "\nQuantidade de acoes: " + observation.clickables()
             + "\nDecida o proximo passo pequeno, seguro e reversivel.";
+    }
+
+    private String answerSystemPrompt() {
+        return "Voce e o AION no modo conversa dentro de uma extensao local de navegador. Responda em portugues do Brasil, de forma humana, clara e util. "
+            + "Use o contexto da pagina quando ele existir, mas diga quando precisar pesquisar mais. "
+            + "Nao peça nem invente senha, token, captcha, pagamento, cadastro, matricula, envio de formulario ou publicacao automatica. "
+            + "Se a pergunta pedir acao sensivel, explique o limite e sugira um passo seguro. Seja conciso.";
+    }
+
+    private String answerUserPrompt(BrowserAutopilotSession session, BrowserAutopilotObserveCommand observation, String question) {
+        return "Objetivo da sessao: " + session.getGoal()
+            + "\nPergunta do humano: " + question
+            + "\nContexto da pagina atual: " + pageContext(observation)
+            + "\nResponda como assistente operacional. Se a pagina nao tiver informacao suficiente, diga qual pesquisa segura faria.";
+    }
+
+    private String pageContext(BrowserAutopilotObserveCommand observation) {
+        if (observation == null) {
+            return "nenhum snapshot observado ainda";
+        }
+        return "URL: " + observation.url()
+            + "; titulo: " + observation.title()
+            + "; headings: " + safeJoin(observation.headings())
+            + "; acoes visiveis: " + safeJoin(observation.actionLabels())
+            + "; quantidade de acoes: " + observation.clickables();
     }
 
     private String safeJoin(List<String> values) {

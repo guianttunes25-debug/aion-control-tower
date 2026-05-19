@@ -3,6 +3,7 @@ package com.taskmaster.web.browser;
 import com.taskmaster.application.browser.BrowserAutopilotDecision;
 import com.taskmaster.application.browser.BrowserAutopilotObserveCommand;
 import com.taskmaster.application.browser.BrowserAutopilotService;
+import com.taskmaster.application.browser.BrowserAutopilotAnswer;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -59,6 +60,14 @@ public class BrowserAutopilotController {
     @PostMapping("/{sessionId}/decide")
     public BrowserAutopilotDecision decide(@PathVariable String sessionId) {
         return service.decide(sessionId);
+    }
+
+    @PostMapping("/{sessionId}/ask")
+    public BrowserAutopilotAnswer ask(
+        @PathVariable String sessionId,
+        @Valid @RequestBody AskBrowserAutopilotRequest request
+    ) {
+        return service.ask(sessionId, request.question());
     }
 
     @PostMapping("/{sessionId}/execution-result")

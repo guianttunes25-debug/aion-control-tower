@@ -14,12 +14,18 @@
       </header>
 
       <label>
-        Objetivo
-        <textarea id="task" rows="4" placeholder="Ex: Pesquisar cursos de IA gratuitos com certificado"></textarea>
+        Pergunte ao AION
+        <textarea id="task" rows="4" placeholder="Ex: Qual curso de Java backend e melhor para iniciante?"></textarea>
       </label>
+
+      <section class="answer-panel" aria-live="polite">
+        <p class="section-title">Resposta</p>
+        <div id="answer">Pergunte algo ou autorize a pagina para usar contexto do navegador.</div>
+      </section>
 
       <section class="actions">
         <button id="authorize">Autorizar nesta pagina</button>
+        <button id="ask">Perguntar</button>
         <button id="observe" disabled>Observar pagina</button>
         <button id="decide" disabled>Decidir proximo passo</button>
         <button id="execute-tool" disabled>Executar ferramenta segura</button>
